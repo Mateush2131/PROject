@@ -1,25 +1,109 @@
-sql_lib
--- Создаем таблицу авторов (основная таблица) CREATE TABLE authors ( author_id SERIAL PRIMARY KEY, first_name VARCHAR(100) NOT NULL, last_name VARCHAR(100) NOT NULL, biography TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
+Содержание
+Обзор системы
 
--- Создаем таблицу категорий (основная таблица) CREATE TABLE categories ( category_id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, description TEXT );
+Структура базы данных
 
--- Создаем таблицу книг (основная таблица) CREATE TABLE books ( book_id SERIAL PRIMARY KEY, title VARCHAR(255) NOT NULL, isbn VARCHAR(20) UNIQUE NOT NULL, publication_date DATE, publisher VARCHAR(255), price DECIMAL(10, 2) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
+Диаграмма ER
 
--- Создаем таблицу клиентов (основная таблица) CREATE TABLE customers ( customer_id SERIAL PRIMARY KEY, first_name VARCHAR(100) NOT NULL, last_name VARCHAR(100) NOT NULL, email VARCHAR(255) UNIQUE NOT NULL, phone VARCHAR(20), address TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
+Описание таблиц
 
--- Создаем таблицу методов доставки (основная таблица) CREATE TABLE delivery_methods ( method_id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, description TEXT, cost DECIMAL(10, 2) NOT NULL );
+Бизнес-логика
 
--- Создаем таблицу заказов (связь "один-ко-многим" с клиентами и методами доставки) CREATE TABLE orders ( order_id SERIAL PRIMARY KEY, customer_id INT NOT NULL, order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, status VARCHAR(50) NOT NULL, total_amount DECIMAL(10, 2) NOT NULL, delivery_method_id INT NOT NULL, FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE, FOREIGN KEY (delivery_method_id) REFERENCES delivery_methods(method_id) );
+Ключевые сущности
 
--- Создаем таблицу экземпляров книг (связь "один-ко-многим" с книгами) CREATE TABLE book_copies ( copy_id SERIAL PRIMARY KEY, book_id INT NOT NULL, condition VARCHAR(50) NOT NULL, available BOOLEAN DEFAULT TRUE, FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE );
+Основные процессы
 
--- Создаем таблицу платежей (связь "один-ко-многим" с заказами) CREATE TABLE payments ( payment_id SERIAL PRIMARY KEY, order_id INT NOT NULL, amount DECIMAL(10, 2) NOT NULL, payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, payment_method VARCHAR(50) NOT NULL, transaction_id VARCHAR(100), FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE );
+Функциональность приложения
 
--- Создаем таблицу элементов заказа (связь "многие-ко-многим" между заказами и экземплярами книг) CREATE TABLE order_items ( order_id INT NOT NULL, copy_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, price_at_purchase DECIMAL(10, 2) NOT NULL, PRIMARY KEY (order_id, copy_id), FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE, FOREIGN KEY (copy_id) REFERENCES book_copies(copy_id) );
+Структура классов
 
--- Создаем таблицу связи книг и авторов (связь "многие-ко-многим") CREATE TABLE book_authors ( book_id INT NOT NULL, author_id INT NOT NULL, PRIMARY KEY (book_id, author_id), FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE, FOREIGN KEY (author_id) REFERENCES authors(author_id) ON DELETE CASCADE );
+Обзор системы
+Система управления книжным магазином предоставляет функционал для:
 
--- Создаем таблицу связи книг и категорий (связь "многие-ко-многим") CREATE TABLE book_categories ( book_id INT NOT NULL, category_id INT NOT NULL, PRIMARY KEY (book_id, category_id), FOREIGN KEY (book_id) REFERENCES books(book_id) ON DELETE CASCADE, FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE );
+Управления каталогом книг и авторов
 
-Снимок экрана (241)
+Обработки заказов клиентов
 
+Управления инвентарем (экземплярами книг)
+
+Обработки платежей и доставки
+
+Структура базы данных
+Диаграмма ER
+![deepseek_mermaid_20250528_d4337d](https://github.com/user-attachments/assets/de3af030-9b9e-436c-8806-c95b353eba16)
+Описание таблиц
+Основные таблицы
+Таблица	Описание	Ключевые поля
+authors	Информация об авторах	author_id, first_name, last_name, biography
+categories	Категории книг	category_id, name, description
+books	Основная информация о книгах	book_id, title, isbn, price, publisher
+customers	Данные клиентов	customer_id, first_name, last_name, email, phone
+delivery_methods	Способы доставки	method_id, name, cost
+Таблицы связей
+Таблица	Описание	Связи
+book_authors	Связь книг и авторов	books ↔ authors (многие-ко-многим)
+book_categories	Связь книг и категорий	books ↔ categories (многие-ко-многим)
+book_copies	Экземпляры книг	books → book_copies (1-ко-многим)
+Таблицы заказов
+Таблица	Описание	Связи
+orders	Заказы клиентов	customers → orders (1-ко-многим)
+order_items	Позиции заказа	orders ↔ book_copies (многие-ко-многим)
+payments	Платежи	orders → payments (1-ко-многим)
+Бизнес-логика
+Ключевые сущности
+Книга (Book)
+
+Атрибуты: название, ISBN, цена, издательство, дата публикации
+
+Связи: авторы (многие-ко-многим), категории (многие-ко-многим), экземпляры (1-ко-многим)
+
+Автор (Author)
+
+Атрибуты: имя, фамилия, биография
+
+Связи: книги (многие-ко-многим)
+
+Клиент (Customer)
+
+Атрибуты: имя, фамилия, email, телефон, адрес
+
+Связи: заказы (1-ко-многим)
+
+Заказ (Order)
+
+Атрибуты: дата, статус, сумма, способ доставки
+
+Связи: клиент (многие-к-одному), позиции заказа (1-ко-многим), платежи (1-ко-многим)
+Клиент → Создает заказ → Добавляет книги → Выбирает доставку → Оплачивает → Заказ выполняется
+
+Добавление книги: 
+Ввод информации о книге → Связь с авторами/категориями → Создание экземпляров
+
+Обновление книги:
+Изменение данных → Обновление связей
+
+Функциональность приложения
+Управление книгами
+Функция	Описание
+Просмотр всех книг	Вывод списка книг с авторами и категориями
+Добавление новой книги	Ввод информации о книге, выбор/создание авторов
+Обновление книги	Изменение названия, цены и других атрибутов
+Удаление книги	Удаление книги и связанных данных (экземпляров, связей)
+Книги без авторов	Поиск и редактирование книг без указанных авторов
+Работа с авторами
+Функция	Описание
+Просмотр авторов	Список всех авторов с подробной информацией
+Добавление автора	Ввод имени, фамилии и биографии
+Удаление автора	Удаление при отсутствии связанных книг
+Дополнительные функции
+Интерактивное меню для навигации
+
+Удобное табличное представление данных
+
+Валидация ввода и обработка ошибок
+
+Поиск книг по различным критериям
+
+Структура классов
+
+![deepseek_mermaid_20250528_0deba6](https://github.com/user-attachments/assets/3c930e7b-c4af-4818-b182-ab77ea5eb806)
